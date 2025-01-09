@@ -1,0 +1,24 @@
+# Подробнее: https://EditorConfig.org
+root = true
+
+# Общие настройки для всех файлов
+[*]
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+# Настройки для Go-файлов
+[*.go]
+indent_style = tab
+indent_size = 4
+
+# Настройки для JSON, YAML, Markdown
+[*.{json,yml,yaml,md}]
+indent_style = space
+indent_size = 2
+
+# Настройки для файлов конфигураций (пример)
+[*.toml]
+indent_style = space
+indent_size = 2
