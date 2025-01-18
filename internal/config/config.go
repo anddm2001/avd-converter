@@ -12,6 +12,8 @@ type Config struct {
 	ExportDir       string
 	LogFilePath     string
 	InfoLogFilePath string
+	MaxCPUTemp      float64
+	MaxGPUTemp      float64
 }
 
 // LoadConfig — загрузка конфигурации с помощью Viper.
@@ -30,6 +32,8 @@ func LoadConfig(envFile string) (*Config, error) {
 	v.SetDefault("EXPORT_DIR", "./output")
 	v.SetDefault("LOG_FILE", "./logs/videoconverter.log")
 	v.SetDefault("INFO_LOG_FILE", "./logs/info.log")
+	v.SetDefault("MAX_CPU_TEMP", 80.0)
+	v.SetDefault("MAX_GPU_TEMP", 85.0)
 
 	// Пробуем прочитать .env
 	if err := v.ReadInConfig(); err != nil {
@@ -43,6 +47,8 @@ func LoadConfig(envFile string) (*Config, error) {
 		ExportDir:       v.GetString("EXPORT_DIR"),
 		LogFilePath:     v.GetString("LOG_FILE"),
 		InfoLogFilePath: v.GetString("INFO_LOG_FILE"),
+		MaxCPUTemp:      v.GetFloat64("MAX_CPU_TEMP"),
+		MaxGPUTemp:      v.GetFloat64("MAX_GPU_TEMP"),
 	}
 
 	return cfg, nil

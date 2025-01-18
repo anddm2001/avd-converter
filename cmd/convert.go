@@ -1,20 +1,23 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"go.uber.org/zap"
 
 	"github.com/anddm2001/avd-converter/internal/config"
+	"github.com/anddm2001/avd-converter/pkg/monitor"
 )
 
 // ConvertCmd возвращает команду для различных преобразований видео.
-func ConvertCmd(logger *zap.Logger, cfg *config.Config) *cobra.Command {
+func ConvertCmd(logger *zap.Logger, cfg *config.Config, maxCPUTemp, maxGPUTemp float64) *cobra.Command {
 	var (
 		bitrate      string
 		codec        string
@@ -37,6 +40,13 @@ func ConvertCmd(logger *zap.Logger, cfg *config.Config) *cobra.Command {
 		Run: func(cmd *cobra.Command, args []string) {
 			logger.Info("Starting convert command...")
 
+			// Инициализируем контекст
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+
+			// Запускаем мониторинг
+			monitor.StartTemperatureMonitor(ctx, logger, maxCPUTemp, maxGPUTemp, cancel, 10*time.Second)
+
 			// Получаем список файлов из каталога импорта
 			var files []string
 			filepath.Walk(cfg.ImportDir, func(path string, info os.FileInfo, err error) error {
@@ -50,6 +60,16 @@ func ConvertCmd(logger *zap.Logger, cfg *config.Config) *cobra.Command {
 			})
 
 			for _, inFilePath := range files {
+				select {
+				case <-ctx.Done():
+					// Значит, температура превысила лимит или что-то ещё отменило контекст
+					logger.Error("Operation canceled due to high temperature or external cancel",
+						zap.String("file", inFilePath))
+					return
+				default:
+					// Продолжаем
+				}
+
 				ext := filepath.Ext(inFilePath)
 				base := strings.TrimSuffix(filepath.Base(inFilePath), ext)
 

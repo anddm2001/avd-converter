@@ -1,7 +1,10 @@
 package main
 
 import (
+	"fmt"
 	"log"
+	"os"
+	"runtime"
 
 	"github.com/anddm2001/avd-converter/cmd"
 	"github.com/anddm2001/avd-converter/internal/config"
@@ -9,6 +12,11 @@ import (
 )
 
 func main() {
+	if runtime.GOOS != "darwin" {
+		fmt.Fprintln(os.Stderr, "Error: This application can only run on macOS (darwin). Exiting.")
+		os.Exit(1)
+	}
+
 	// 1. Загружаем конфиг через Viper
 	cfg, err := config.LoadConfig(".env")
 	if err != nil {
@@ -32,8 +40,8 @@ func main() {
 	// 4. Собираем корневую команду и регистрируем подкоманды
 	rootCmd := cmd.RootCmd(mainLogger, infoLogger, cfg)
 	rootCmd.AddCommand(
-		cmd.InfoCmd(infoLogger, cfg),    // команда info
-		cmd.ConvertCmd(mainLogger, cfg), // команда convert
+		cmd.InfoCmd(infoLogger, cfg),                                    // команда info
+		cmd.ConvertCmd(mainLogger, cfg, cfg.MaxCPUTemp, cfg.MaxGPUTemp), // команда convert
 	)
 
 	// 5. Запускаем
